@@ -1,0 +1,358 @@
+\ifdefined\isSubfile
+\else
+  \documentclass{book}
+  \input{preamble}
+  \begin{document}
+\fi
+
+\chapter{The Black-Scholes Model}
+Let review some common derivative knowledge first. 
+\begin{enumerate}
+    \item European option: the payoff is path independent of the underlying asset (in this chapter, we will simply call it the stock).
+    \item Call options have payoff $(S_T-K)^+ = \max(S_T-K,0)$ at maturity.
+    \item Put options have payoff $(K-S_T)^+ = \max(K-S_T,0)$ at maturity.
+\end{enumerate}
+Since the put-call parity relates the price of a put option and a call option, we would focus on call options in this chapter.
+
+We assume that the stock price $S_t$ follows a Geometric Brownian Motion (GBM) under the real probability measure $\mathbb{P}$, 
+\begin{align}
+    \dd S_t &= \mu S_t \dd t +\sigma S_t \dd B_t^\mathbb{P},
+    \label{eqn:BSM:stock-GBM-P}
+\end{align}
+where $B_t^\mathbb{P}$ is the standard Brownian motion (Wiener process) under measure $\mathbb{P}$, $\mu$ is the drift rate of $S$ (annualized), and $\sigma$ is the standard deviation of the stock's return. This equation is understood under the discrete limit
+\begin{align}
+    S_{t+\Delta t} -S_t &= \underbrace{\mu S_t \Delta t}_{\text{drift term}} + \underbrace{\sigma S_t (B_{t+\Delta t}^\mathbb{P} - B_{t}^\mathbb{P})}_{\text{difussion term, } \sim N(0,\Delta t)}.
+    \label{eqn:BSM:stock-GBM-Q-discrete}
+\end{align}
+In many cases, it is easier to transform this to the risk neutral measure $\mathbb{Q}$
+\begin{align}
+    \dd S_t &= r S_t \dd t +\sigma S_t \dd B_t^\mathbb{Q},
+    \label{eqn:BSM:stock-GBM-Q}
+\end{align}
+where $B_t^\mathbb{Q}$ is the standard Brownian motion under measure $\mathbb{Q}$, and $r$ is risk free rate. \textcolor{blue}{write something on the measure change, the Girsanov’s theorem}
+
+The value of a call option $C(t,S)$ at a specific time $t$ is $C(t, S_t)$. Traditionally, there are two approaches to derive the Black-Scholes Model.
+\begin{enumerate}
+    \item PDE: Construct a PDE for $C(t,S)$, which can be reduce to a heat equation, then solve the heat equation to get the solution.
+    \item Probabilistic: the fair price of a call option $C(t, S_t)$ should be the payoff $(S_T-K)^+$ at maturity $T$ discounts to the current time $t$.
+    \begin{align}
+        C(t, S_t) = e^{-r (T-t)} \mathbb{E}^{\mathbb{Q}}[(S_T-K)^+ | S_t = S].
+        \label{eqn:BSM:call-as-expect}
+    \end{align}
+    Here we note that the conditional expectation is conditioned on $S_t$ is due to the Markovian of $S_t$.
+\end{enumerate}
+
+\section{PDE Approach}
+
+\subsection{The Black-Scholes PDE}
+
+Let's start by applying Itô’s lemma to a call option $C(t, S_t)$ under the risk-neutral measure $\mathbb{Q}$, we find
+\begin{align}
+    \dd C(t, S_t) &= \pdv{C}{t} \dd t + \pdv{C}{S} \dd S_t + \frac{1}{2}{\pdv[2]{C}{S}}{\dd} [S]_t, \notag\\
+    &= \pdv{C}{t} \dd t + {\pdv{C}{S}} (rS_t \dd t+\sigma S_t \dd B_t^\mathbb{Q}) + \frac{1}{2}{\pdv[2]{C}{S}}\sigma^2 S_t^2 \dd t, \notag\\
+    &= \left(\pdv{C}{t} + rS_t {\pdv{C}{S}} + \frac{1}{2} \sigma^2 S_t^2 {\pdv[2]{C}{S}} \right) \dd t + \sigma S_t {\pdv{C}{S}} \dd B_t^\mathbb{Q},
+\end{align}
+where $[S]_t = \int_0^t (\dd S_u)^2$ is the quadratic variation of $S$. 
+
+Consider a self-financing portfolio $\Pi_t = C(t, S_t) - \Delta_t S_t$, which is required to be risk-free, i.e. $\dd \Pi_t = r \Pi_t \dd t$. 
+From 
+\begin{align}
+    \dd \Pi_t &= \dd C(t, S_t) - \Delta_t \dd S_t, \notag\\ 
+    \label{eqn:BS:dPI}
+    &= \left(\sigma S_t {\pdv{C}{S}} - \Delta_t \sigma S_t \right)\dd B_t^\mathbb{Q} + 
+    \left(
+    \pdv{C}{t} + rS_t {\pdv{C}{S}} + \frac{1}{2} \sigma^2 S_t^2 {\pdv[2]{C}{S}} - \Delta_t r S_t
+    \right)
+    \dd t,
+\end{align}
+eliminating the stochastic term determines $\Delta_t$
+\begin{align}
+    \sigma S_t {\pdv{C}{S}} - \Delta_t \sigma S_t  = 0,\quad \Rightarrow\quad \Delta_t = {\pdv{C}{S}}.
+\end{align}
+$\Delta_t$ is known as the hedge ratio or Greek Delta.
+Substituting $\Delta_t$ back into the drift term in $\dd \Pi_t$~(\ref{eqn:BS:dPI}) gives
+\begin{align*}
+    \pdv{C}{t} + \frac{1}{2} \sigma^2 S_t^2 {\pdv[2]{C}{S}} = r \underbrace{\left(C(t, S_t) - \pdv{C}{S} S_t\right)}_{\Pi_t}.
+\end{align*}
+Rearranging then yields the classic Black-Scholes PDE
+\begin{align}
+    \label{eqn:BS:Black-Scholes-Equation}
+    \pdv{C}{t} + r S \pdv{C}{S} +\frac{1}{2}\sigma^2 S^2 \pdv[2]{C}{S} = rC.
+\end{align}
+The boundary conditions for the Black-Scholes PDE are
+\begin{align}
+    C(T,S) = (S-K)^+,\quad C(t,0) = 0.
+\end{align}
+
+\subsection{The Black-Scholes PDE and Heat Equations}
+
+It is well known that the Black-Scholes equation can be solved by reducing to a standard heat equation. We will verify it in this section. To solve the Black-Scholes PDE, we introduce the log-price $x$ and time variable $\tau$
+\begin{align}
+    \label{eqn:BS-heat:var-tf-x-S-and-t-tau}
+    x = \log\frac{S}{K},\quad \tau = \frac{\sigma^2}{2}(T - t),
+\end{align}
+so that
+\begin{align}
+    \label{eqn:BS-heat:var-tf-S-x-and-t-tau}
+    S = K e^x, \quad t = T - \frac{2\tau}{\sigma^2},
+\end{align}
+and define
+\begin{align}
+    \label{eqn:BS-heat:var-tf-C-v}
+    C(t, S) = Kv(x,\tau).
+\end{align}
+
+To express the Black-Scholes PDE in terms of $v, x, \tau$, we first compute the time derivative
+\begin{align*}
+    \pdv{v}{\tau} = \frac{1}{K}\pdv{C}{\tau} 
+    = \frac{1}{K}\pdv{C}{t}\pdv{t}{\tau}
+    = \frac{-2}{K\sigma^2}\pdv{C}{t},
+\end{align*}
+that is 
+\begin{align}
+    \label{eqn:BS-heat:dC_dt}
+    \pdv{C}{t} = -\frac{K\sigma^2}{2} \pdv{v}{\tau}.
+\end{align}
+Next, compute the first order spatial derivative
+\begin{align*}
+    \pdv{v}{x} = \frac{1}{K} \pdv{C}{x}
+    = \frac{1}{K} \pdv{C}{S}\pdv{S}{x}
+    = e^{x} \pdv{C}{S},
+\end{align*}
+that is
+\begin{align}
+    \label{eqn:BS-heat:dC_dS}
+    \pdv{C}{S} = e^{-x} \pdv{v}{x}.
+\end{align}
+And compute the second order derivative,
+\begin{align*}
+    \pdv[2]{v}{x} = \pdv{}{x}\left(e^{x} \pdv{C}{S}\right)
+    = e^{x}\pdv{C}{S} + e^{x} \pdv{}{S}\left( \pdv{C}{x} \right)
+    = e^{x}\pdv{C}{S} + K e^{2x} \pdv[2]{C}{S},
+\end{align*}
+that is 
+\begin{align}
+    \label{eqn:BS-heat:d2C_dS2}
+    \pdv[2]{C}{S} = \frac{1}{K}e^{-2x}\left(\pdv[2]{v}{x} - \pdv{v}{x}\right).
+\end{align}
+Substituting Eqs.~(\ref{eqn:BS-heat:dC_dt}), (\ref{eqn:BS-heat:dC_dS}) and (\ref{eqn:BS-heat:d2C_dS2}) into the Black-Scholes equation (\ref{eqn:BS:Black-Scholes-Equation}), and use the variable transformation Eqs.~(\ref{eqn:BS-heat:var-tf-S-x-and-t-tau}) and (\ref{eqn:BS-heat:var-tf-C-v}) we get
+\begin{align}
+    -\frac{K\sigma^2}{2} \pdv{v}{\tau} + r K \pdv{v}{x} +\frac{1}{2}\sigma^2 K\left(\pdv[2]{v}{x} - \pdv{v}{x}\right) = rKv &, \notag\\
+    \pdv{v}{\tau} - \left(\frac{2r}{\sigma^2} - 1\right)  \pdv{v}{x} - \pdv[2]{v}{x} = - \frac{2r}{\sigma^2}v &, \notag\\
+    \label{eqn:BS-heat:PDE-of-v}
+    \pdv{v}{\tau} = \pdv[2]{v}{x} + (\lambda - 1) \pdv{v}{x} - \lambda v &, \quad \underline{\lambda = \frac{2r}{\sigma^2},}
+\end{align}
+with boundary condition
+\begin{align}
+    v(x,0) = \max(e^{x} - 1, 0).
+\end{align}
+
+The equation~(\ref{eqn:BS-heat:PDE-of-v}) still contains a first‐order spatial derivative and a zeroth‐order (“linear”) term. To reduce it to the standard heat equation, set $v(x,\tau) = \exp(Ax + B\tau)\theta(x,\tau)$, applying the method of undetermined coefficients to choose $A$ and $B$ so that both the $\theta$ and the $\partial_x\theta$ vanish. The derivatives are calculated as
+\begin{align}
+    \label{eqn:BS-heat:dv_dtau}
+    \pdv{v}{\tau} &= B \exp(Ax + B\tau)\theta + \exp(Ax + B\tau)\pdv{\theta}{\tau},\\
+    \label{eqn:BS-heat:dv_dx}
+    \pdv{v}{x} &= A \exp(Ax + B\tau)\theta + \exp(Ax + B\tau)\pdv{\theta}{x},\\
+    \label{eqn:BS-heat:d2v_dx2}
+    \pdv[2]{v}{x} &= A^2 \exp(Ax + B\tau)\theta + 2 A \exp(Ax + B\tau)\pdv{\theta}{x} + \exp(Ax + B\tau)\pdv[2]{\theta}{x}.
+\end{align}
+Plugging Eqs.~(\ref{eqn:BS-heat:dv_dtau}), (\ref{eqn:BS-heat:dv_dx}) and (\ref{eqn:BS-heat:d2v_dx2}) to Eq.~(\ref{eqn:BS-heat:PDE-of-v}), we get 
+\begin{align}
+    B\theta + \pdv{\theta}{\tau}  =  A^2\theta + 2A\pdv{\theta}{x} + \pdv[2]{\theta}{x} + (\lambda - 1) \left(A\theta + \pdv{\theta}{x}\right) - \lambda \theta, \notag\\
+    \pdv{\theta}{\tau} = \pdv[2]{\theta}{x} + (2A + \lambda - 1) \pdv{\theta}{x} + \big[A^2 + (\lambda - 1) A - \lambda - B\big] \theta .\notag
+\end{align}
+To eliminate the $\partial_x\theta$ and $\theta$ terms, $A$ and $B$ must satisfy
+\begin{align*}
+    \begin{cases}
+        2A + \lambda - 1 = 0,\\
+        A^2 + (\lambda - 1) A - \lambda - B = 0,
+    \end{cases}
+\end{align*}
+which yields
+\begin{align}
+    \begin{cases}
+        A = -\frac{1}{2} (\lambda - 1),\\
+        B = -\frac{1}{4} (\lambda + 1)^2 .
+    \end{cases}
+\end{align}
+Therefore, we have 
+\begin{align}
+    \label{eqn:BS-heat:var-tf-v-theta}
+    v(x, \tau) = \exp[-\frac{1}{2} (\lambda - 1) x -\frac{1}{4} (\lambda + 1)^2 \tau] \theta(x, \tau),
+\end{align}
+and the Black-Scholes equation reduces to a heat equation
+\begin{align}
+    \label{eqn:BS-heat:heat-eq-of-theta}
+    \pdv{\theta}{\tau} = \pdv[2]{\theta}{x}
+\end{align}
+with boundary condition
+\begin{align}
+    \label{eqn:BS-heat:heat-eq-of-theta-bound-cond}
+    \theta(x,0) = \exp[\frac{1}{2}(\lambda - 1)x] \max(e^{x} - 1, 0) =  \max\left\{\exp[\frac{1}{2}(\lambda + 1)x] - \exp[\frac{1}{2}(\lambda - 1)x], 0\right\}.
+\end{align}
+
+\subsection{The Black-Scholes Formula}
+
+The solution to the heat equation~(\ref{eqn:BS-heat:heat-eq-of-theta}) is given by the integral formula  \textcolor{blue}{write a appendix for heat equation}
+\begin{align}
+    \label{eqn:BS-form:sol-of-heat-eq}
+    \theta(x, \tau) = \frac{1}{2\sqrt{\pi\tau}} \int_{-\infty}^{\infty} \theta(y,0)\exp[-\frac{(x-y)^2}{4\tau}]\dd y,
+\end{align}
+where $\theta(y,0)$ follows from the boundary condition~(\ref{eqn:BS-heat:heat-eq-of-theta-bound-cond})
+\begin{align}
+    \label{eqn:BS-form:bond-cond-piece}
+    \theta(y,0) &= \max\left\{ \exp(\frac{1}{2}\lambda y) \left[ \exp(\frac{1}{2}y) - \exp(-\frac{1}{2}y)\right], 0\right\}, \notag\\
+    &= 
+    \left\{
+    \begin{aligned}
+        &\exp(\frac{1}{2}\lambda y) \left[ \exp(\frac{1}{2}y) - \exp(-\frac{1}{2}y)\right], &&y > 0,\\
+        &0, &&y < 0.
+    \end{aligned}
+    \right.
+\end{align}
+Substituting the piecewise initial condition from Eq.~(\ref{eqn:BS-form:bond-cond-piece}) into the integral solution~(\ref{eqn:BS-form:sol-of-heat-eq}) yields,
+\begin{align}
+    \theta(x, \tau) &= \frac{1}{2\sqrt{\pi\tau}} \int_{0}^{\infty}\exp(\frac{1}{2}\lambda y) \left[ \exp(\frac{1}{2}y) - \exp(-\frac{1}{2}y)\right]\exp[-\frac{(x-y)^2}{4\tau}]\dd y, \notag\\
+    &= \underbrace{\frac{1}{2\sqrt{\pi\tau}} \int_{0}^{\infty}\exp[\frac{1}{2}(\lambda + 1) y] \exp[-\frac{(x-y)^2}{4\tau}]\dd y}
+    _{I_1}
+    - 
+    \underbrace{\frac{1}{2\sqrt{\pi\tau}} \int_{0}^{\infty}\exp[\frac{1}{2}(\lambda - 1) y] \exp[-\frac{(x-y)^2}{4\tau}]\dd y}
+    _{I_2}
+    , \notag\\
+    &= I_1 - I_2.
+    \label{eqn:BS-form:theta-I1-I2}
+\end{align}
+The solution decomposes into two integrals, $I_1$ and $I_2$, which differ only by the sign in $\lambda \pm 1$.
+Since $I_1$ and $I_2$ share the same form, solving one immediately yields the other. To evaluate $I_1$, perform a Gaussian integral via the following substitution
+\begin{align}
+    z = \frac{y-x}{\sqrt{2\tau}},\quad \dd z = \frac{1}{\sqrt{2\tau}} \dd y.
+\end{align}
+Applying this substitution to $I_1$ gives
+\begin{align}
+    I_1 &= \frac{1}{\sqrt{2\pi}}\int_{-\frac{x}{\sqrt{2\tau}}}^\infty 
+    \exp[\frac{-z^2}{2}]
+    \exp[\frac{1}{2}(\lambda + 1) (\sqrt{2\tau} z + x)]
+    \dd z, \notag\\
+    &= \frac{1}{\sqrt{2\pi}}\int_{-\frac{x}{\sqrt{2\tau}}}^\infty 
+    \exp\left\{\frac{1}{2} 
+    \left[-z^2 + (\lambda + 1) \sqrt{2\tau} z - \left((\lambda + 1)\sqrt{\frac{\tau}{2}}\right)^2 
+    + (\lambda + 1)^2\frac{\tau}{2} + (\lambda + 1) x\right]
+    \right\}\dd z, \notag\\
+    &= 
+    \exp[\frac{1}{4}(\lambda + 1)^2 \tau + \frac{1}{2} (\lambda + 1) x]
+    \frac{1}{\sqrt{2\pi}}
+    \int_{-\frac{x}{\sqrt{2\tau}}}^\infty 
+    \exp\left\{
+     -\frac{1}{2}\left[ z - (\lambda + 1)\sqrt{\frac{\tau}{2}}\right]^2 
+    \right\}\dd z, \notag\\
+    &= 
+    \exp[\frac{1}{2} (\lambda + 1) x + \frac{1}{4}(\lambda + 1)^2 \tau]
+    \frac{1}{\sqrt{2\pi}}
+    \int_{-\frac{x}{\sqrt{2\tau}} - (\lambda + 1)\sqrt{\frac{\tau}{2}}}^\infty 
+    \exp\left\{
+     -\frac{1}{2}u ^2 
+    \right\}\dd u, \quad \underline{u = z - (\lambda + 1)\sqrt{\frac{\tau}{2}},}\notag\\
+    &= 
+    \exp[\frac{1}{2} (\lambda + 1) x + \frac{1}{4}(\lambda + 1)^2 \tau]
+    N(d_1),
+    \quad \underline{d_1 = \frac{x + (\lambda + 1) \tau}{\sqrt{2\tau}}}.
+    \label{eqn:BS-form:I1}
+\end{align}
+Similarly, we obtain
+\begin{align}
+    I_2 &= \exp[\frac{1}{2} (\lambda - 1) x + \frac{1}{4}(\lambda - 1)^2 \tau]
+    N(d_2),
+    \quad \underline{d_2 = \frac{x + (\lambda - 1) \tau}{\sqrt{2\tau}}}.
+    \label{eqn:BS-form:I2}
+\end{align}
+Finally, we express the call option $C(t,S)$ in $\theta(x,\tau)$, using Eqs.~(\ref{eqn:BS-heat:var-tf-C-v}) and (\ref{eqn:BS-heat:var-tf-v-theta}). 
+Then, substitute $I_1$~(\ref{eqn:BS-form:I1}) and $I_2$~(\ref{eqn:BS-form:I2}) into the integral solution of $\theta(x,\tau)$~(\ref{eqn:BS-form:theta-I1-I2}) yields
+\begin{align}
+    C(t,S) 
+    % &= Kv(x,\tau), \notag\\
+    &= K \exp[-\frac{1}{2} (\lambda - 1) x  -\frac{1}{4} (\lambda + 1)^2 \tau] \theta(x, \tau), \notag\\
+    &= K \exp[-\frac{1}{2} (\lambda - 1) x -\frac{1}{4} (\lambda + 1)^2 \tau] (I_1 - I_2), \notag\\
+    &= K \exp(x) N(d_1) - K \exp(-\lambda \tau) N(d_2). \notag
+    % C(t,S) &=  K \exp[\log(S/K)] N(d_1) - K \exp(-\frac{2r}{\sigma^2} \sigma^2(T-t)/2) N(d_2), \notag\\
+\end{align}
+Replacing $x, \tau, \lambda$ by their definitions in terms of $S, t, r, \sigma$ via Eqs.~(\ref{eqn:BS-heat:var-tf-x-S-and-t-tau}) and (\ref{eqn:BS-heat:PDE-of-v}), we get the Black-Scholes formula for call options,
+\begin{align}
+    C(t,S) &=  S N(d_1) - K \exp[-r (T-t)] N(d_2).
+    \label{eqn:BS-form:call}
+\end{align}
+with parameters $d_1$ and $d_2$ given by
+\begin{align}
+    % d_{1,2} &= \frac{\log(S/K) + (\frac{2r}{\sigma^2} \pm 1) \frac{\sigma^2(T-t)}{2}}{\sqrt{2\frac{\sigma^2(T-t)}{2}}}, \notag\\
+    d_{1,2} &= \frac{\log(\frac{S}{K}) + \left[r \pm \frac{\sigma^2}{2}\right] (T-t) }{\sigma\sqrt{T-t}}.
+    \label{eqn:BS-form:d1-and-d2}
+\end{align}
+
+\section{Probabilistic Approach}
+
+Under the risk neutral measure $\mathbb{Q}$, the stock price follows a Geometric Brownian Motion (previously shown in Eq.~(\ref{eqn:BSM:stock-GBM-Q}))
+\begin{align*}
+    \dd S_t &= r S_t \dd t +\sigma S_t \dd B_t^\mathbb{Q},
+\end{align*}
+where $r$ is risk free rate. The first step is to solve for $S_t$. Let $A_t = \log S_t$. Applying Itô’s lemma yields
+\begin{align}
+    \dd A_t &= \frac{1}{S_t} \dd S_t - \frac{1}{2} \frac{1}{S_t^2} {\dd} {[S]_t}, \notag\\
+    &= r \dd t +\sigma \dd B_t^\mathbb{Q} - \frac{1}{2} \sigma^2 \dd t, \notag\\
+    &= \left(r - \frac{1}{2} \sigma^2\right) \dd t + \sigma  \dd B_t^\mathbb{Q}.
+\end{align}
+Since the right-hand side is entirely known, we integrate and obtain
+\begin{align}
+    A_t &= A_0 + \int_0^t \left(r - \frac{1}{2} \sigma^2\right) \dd s + \sigma \int_0^t \dd B_s^\mathbb{Q}, \notag\\
+    &=  A_0 + \left(r - \frac{1}{2} \sigma^2\right)t+ \sigma  B_t^\mathbb{Q}, \notag\\
+    S_t &= {S_0} \exp \left[ \left(r - \frac{1}{2} \sigma^2\right)t + \sigma  B_t^\mathbb{Q} \right].
+\end{align}
+Thus, looking from the current time $t$, the solution at the expiration time $T$ is 
+\begin{align}
+    S_T &= {S_t} \exp \left[ \left(r - \frac{1}{2} \sigma^2\right)(T - t) + \sigma  \left(B_T^\mathbb{Q} - B_t^\mathbb{Q}\right) \right].
+\end{align}
+To better understand the distribution of $S_T$, we take the logarithm
+\begin{align}
+    \log S_T &= \underbrace{\log {S_t} + \left(r - \frac{1}{2} \sigma^2\right)(T - t)}_{\text{deterministic value}} + \sigma \underbrace{\left(B_T^\mathbb{Q} - B_t^\mathbb{Q}\right)}_{\text{r.v.} \sim N(0,  T - t)},
+\end{align}
+that is, $\log S_T$ is a normal distribution, hence $S_t$ is a log-normal distribution. Define $\tau = T - t$, the time to maturity, and let $Y\sim N(0,1)$ be the standard normal distribution. We have a cleaner form for $S_T$
+\begin{align}
+    S_T &= {S_t} \exp \left[ \left(r - \frac{1}{2} \sigma^2\right)\tau + \sigma  \sqrt{\tau} Y \right].
+\end{align}
+Recall that the price for call options is the conditional expectation of $(S - K)^+$ at maturity discounted to the current time $t$, i.e., Eq.~(\ref{eqn:BSM:call-as-expect})
+\begin{align*}
+    C(t, S_t) = e^{-r \tau} \mathbb{E}^{\mathbb{Q}}[(S_T-K)^+ | S_t = S].
+\end{align*}
+We perform the following calculation
+\begin{align*}
+    C(t,S_t) &= \exp(-r\tau) \mathbb{E}^\mathbb{Q}\left[ \left({S_t} \exp \left\{ \left(r - \frac{1}{2} \sigma^2\right)\tau + \sigma  \sqrt{\tau} Y \right\} - K \right)^+ \Bigg| S_t = S\right], \notag\\
+    &=  \exp(-r\tau) \mathbb{E}^\mathbb{Q}\left[ \left(S \exp \left\{ \left(r - \frac{1}{2} \sigma^2\right)\tau + \sigma  \sqrt{\tau} Y \right\} - K \right)^+ \right], \notag\\
+    &= \exp(-r\tau) \int_{-\infty}^{+\infty} \left(S \exp \left\{ \left(r - \frac{1}{2} \sigma^2\right)\tau + \sigma  \sqrt{\tau} y \right\} - K \right)^+  \frac{1}{\sqrt{2\pi}}\exp({-\frac{y^2}{2}}) \dd y. \notag
+\end{align*}
+To get rid of the positive-part operator $()^+$, we calculate the critical point of $y$
+\begin{align}
+    S \exp \left\{ \left(r - \frac{1}{2} \sigma^2\right)\tau + \sigma  \sqrt{\tau} y \right\} - K &=0, \notag\\
+    \left(r - \frac{1}{2} \sigma^2\right)\tau + \sigma  \sqrt{\tau} y &= \log \frac{K}{S}, \notag\\
+    y &= \underbrace{\frac{\log \frac{K}{S} - \left(r - \frac{1}{2} \sigma^2\right)\tau} {\sigma \sqrt{\tau}}}_{ =\, l}.
+\end{align}
+With this information, we proceed with our calculation
+\begin{align}
+    C(t,S_t) &= \exp(-r\tau) \int_{l}^{+\infty} \left(S \exp \left\{ \left(r - \frac{1}{2} \sigma^2\right)\tau + \sigma  \sqrt{\tau} y \right\} - K \right) \frac{1}{\sqrt{2\pi}}\exp({-\frac{y^2}{2}}) \dd y, \notag\\
+    &= S \int_{l}^{+\infty}  \exp (- \frac{1}{2} \sigma^2 \tau + \sigma \sqrt{\tau} y) \frac{1}{\sqrt{2\pi}}\exp({-\frac{y^2}{2}}) \dd y - \exp(-r\tau) KN(-l), \notag\\
+    &= S \int_{l}^{+\infty} \frac{1}{\sqrt{2\pi}}\exp[{-\frac{1}{2}} \left(y^2 - 2\sigma  \sqrt{\tau} y + \big(\sigma\sqrt{\tau}\big)^2\right)] \dd y - K \exp(-r\tau) N(-l), \notag \\
+    &= S \int_{l - \sigma\sqrt{\tau}}^{+\infty} \frac{1}{\sqrt{2\pi}}\exp(-\frac{1}{2} u^2) \dd u - K \exp(-r\tau) N(-l), \quad  \underline{u = y - \sigma\sqrt{\tau},} \notag\\
+    &= S N (\sigma\sqrt{\tau} - l) - K \exp(-r\tau) N(-l), \notag \\
+    &= S N (d_1) - K \exp(-r\tau) N(d_2), 
+    \label{eqn:BS-Exp:call}
+\end{align}
+where in the last step, we simply verify that
+\begin{align*}
+    \sigma\sqrt{\tau} - l &= \frac{\sigma^2 \tau + \log \frac{S}{K} + \left(r - \frac{1}{2} \sigma^2\right)\tau} {\sigma \sqrt{\tau}} = \frac{\log \frac{S}{K} + \left(r + \frac{1}{2} \sigma^2\right)\tau} {\sigma \sqrt{\tau}} = d_1, \\
+    -l &= \frac{\log \frac{S}{K} + \left(r - \frac{1}{2} \sigma^2\right)\tau} {\sigma \sqrt{\tau}} = d_2.
+\end{align*}
+This result Eq.~(\ref{eqn:BS-Exp:call}) calculated from expectation matches the result Eq.~(\ref{eqn:BS-form:call}) from solving the Black-Scholes PDE.
+
+\ifdefined\isSubfile
+\else
+  % \bibliographystyle{alpha}
+  % \bibliography{ref}
+  \end{document}
+\fi

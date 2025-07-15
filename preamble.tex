@@ -1,0 +1,57 @@
+\usepackage{fullpage}
+\usepackage{physics}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{dsfont}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{bm}
+\usepackage[unicode]{hyperref}
+\usepackage{color}
+\usepackage{subcaption}
+\usepackage{tikz}
+\usepackage{tocloft}
+\newcommand*\circled[1]{\tikz[baseline=(char.base)]{
+            \node[shape=circle,draw,inner sep=2pt] (char) {#1};}}
+
+\usepackage[backend=bibtex]{biblatex}
+\addbibresource{ref.bib}
+
+\newcommand{\listproblemname}{List of Problems}
+\newlistof[section]{problem}{prob}{\listproblemname}
+\newcommand{\problem}[1]{%
+  \refstepcounter{problem}
+  \par\noindent\textbf{Problem \theproblem. #1}
+  \addcontentsline{prob}{problem}
+    {\protect\numberline{\theproblem}\ \ \ \ #1}\par}
+
+\newcommand{\listtheoremmname}{List of Theorems}
+\newlistof[section]{theorem}{theo}{\listtheoremmname}
+\newcommand{\theorem}[1]{%
+  \refstepcounter{theorem}
+  \par\noindent\textbf{Theorem \thetheorem. #1}
+  \addcontentsline{theo}{theorem}
+    {\protect\numberline{\thetheorem}\ \ \ \ #1}\par}
+
+\newcommand{\listconclusionmname}{List of Useful Conclusions}
+\newlistof[section]{conclusion}{conc}{\listconclusionmname}
+\newcommand{\conclusion}[1]{%
+  \refstepcounter{conclusion}
+  \par\noindent\textbf{Conclusion \theconclusion. #1}
+  \addcontentsline{conc}{conclusion}
+    {\protect\numberline{\theconclusion}\ \ \ \ #1}\par}
+
+  \newcommand{\listpropositionname}{List of Propotisitons}
+  \newlistof[section]{proposition}{prop}{\listpropositionname}
+  \newcommand{\proposition}[1]{%
+    \refstepcounter{proposition}
+    \par\noindent\textbf{Proposition \theproposition. #1}
+    \addcontentsline{prop}{proposition}
+      {\protect\numberline{\theproposition}\ \ \ \ #1}\par}
+
+\DeclareMathOperator{\sgn}{sgn}
+\DeclareMathOperator{\varr}{\mathbb Var}
+\DeclareMathOperator{\cov}{\mathbb Cov}
+\DeclareMathOperator{\corr}{corr}
+\newcommand{\overbar}[1]{\mkern 1.5mu\overline{\mkern-1.5mu#1\mkern-1.5mu}\mkern 1.5mu}
