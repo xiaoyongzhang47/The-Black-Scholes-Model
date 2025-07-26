@@ -6,7 +6,7 @@
 \fi
 
 \chapter{The Black-Scholes Model}
-Let review some common derivative knowledge first. 
+Let's review some common derivative knowledge first. 
 \begin{enumerate}
     \item European option: the payoff is path independent of the underlying asset (in this chapter, we will simply call it the stock).
     \item Call options have payoff $(S_T-K)^+ = \max(S_T-K,0)$ at maturity.
@@ -21,7 +21,7 @@ We assume that the stock price $S_t$ follows a Geometric Brownian Motion (GBM) u
 \end{align}
 where $B_t^\mathbb{P}$ is the standard Brownian motion (Wiener process) under measure $\mathbb{P}$, $\mu$ is the drift rate of $S$ (annualized), and $\sigma$ is the standard deviation of the stock's return. This equation is understood under the discrete limit
 \begin{align}
-    S_{t+\Delta t} -S_t &= \underbrace{\mu S_t \Delta t}_{\text{drift term}} + \underbrace{\sigma S_t (B_{t+\Delta t}^\mathbb{P} - B_{t}^\mathbb{P})}_{\text{difussion term, } \sim N(0,\Delta t)}.
+    S_{t+\Delta t} -S_t &= \underbrace{\mu S_t \Delta t}_{\text{drift term}} + \underbrace{\sigma S_t (B_{t+\Delta t}^\mathbb{P} - B_{t}^\mathbb{P})}_{\text{diffusion term, } \sim \mathcal{N}(0,\Delta t)}.
     \label{eqn:BSM:stock-GBM-Q-discrete}
 \end{align}
 In many cases, it is easier to transform this to the risk neutral measure $\mathbb{Q}$
@@ -42,7 +42,7 @@ The value of a call option $C(t,S)$ at a specific time $t$ is $C(t, S_t)$. Tradi
     Here we note that the conditional expectation is conditioned on $S_t$ is due to the Markovian of $S_t$.
 \end{enumerate}
 
-\section{PDE Approach}
+\section{The PDE Approach}
 
 \subsection{The Black-Scholes PDE}
 
@@ -258,7 +258,7 @@ Applying this substitution to $I_1$ gives
     \quad \underline{d_1 = \frac{x + (\lambda + 1) \tau}{\sqrt{2\tau}}}.
     \label{eqn:BS-form:I1}
 \end{align}
-Similarly, we obtain
+Note that for a normal distribution, we use $\mathcal{N}$ for the  probability density function, and $N$ for the cumulative distribution function. Similarly, we obtain
 \begin{align}
     I_2 &= \exp[\frac{1}{2} (\lambda - 1) x + \frac{1}{4}(\lambda - 1)^2 \tau]
     N(d_2),
@@ -311,9 +311,9 @@ Thus, looking from the current time $t$, the solution at the expiration time $T$
 \end{align}
 To better understand the distribution of $S_T$, we take the logarithm
 \begin{align}
-    \log S_T &= \underbrace{\log {S_t} + \left(r - \frac{1}{2} \sigma^2\right)(T - t)}_{\text{deterministic value}} + \sigma \underbrace{\left(B_T^\mathbb{Q} - B_t^\mathbb{Q}\right)}_{\text{r.v.} \sim N(0,  T - t)},
+    \log S_T &= \underbrace{\log {S_t} + \left(r - \frac{1}{2} \sigma^2\right)(T - t)}_{\text{deterministic value}} + \sigma \underbrace{\left(B_T^\mathbb{Q} - B_t^\mathbb{Q}\right)}_{\text{r.v.} \sim \mathcal{N}(0,  T - t)},
 \end{align}
-that is, $\log S_T$ is a normal distribution, hence $S_t$ is a log-normal distribution. Define $\tau = T - t$, the time to maturity, and let $Y\sim N(0,1)$ be the standard normal distribution. We have a cleaner form for $S_T$
+that is, $\log S_T$ is a normal distribution, hence $S_t$ is a log-normal distribution. Define $\tau = T - t$, the time to maturity, and let $Y\sim \mathcal{N}(0,1)$ be the standard normal distribution. We have a cleaner form for $S_T$
 \begin{align}
     S_T &= {S_t} \exp \left[ \left(r - \frac{1}{2} \sigma^2\right)\tau + \sigma  \sqrt{\tau} Y \right].
 \end{align}
